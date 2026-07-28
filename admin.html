@@ -168,7 +168,7 @@
       document.getElementById('admin-2fa').value = '';
     }
 
-        async function updateStats() {
+    async function updateStats() {
       try {
         const res = await fetch('/api/stats');
         const data = await res.json();
@@ -190,7 +190,7 @@
           div.className = 'service-item';
           div.innerHTML = `
             <div>
-              <h4 class="font-bold">${svc.name}</h4>
+              <h4 class="font-bold">${svc.title || svc.name}</h4>
               <p class="text-sm opacity-70">${svc.description}</p>
             </div>
             <div class="actions">
@@ -206,9 +206,9 @@
     }
 
     async function addService() {
-      const name = document.getElementById('new-service-name').value.trim();
+      const title = document.getElementById('new-service-name').value.trim();
       const desc = document.getElementById('new-service-desc').value.trim();
-      if (!name || !desc) {
+      if (!title || !desc) {
         alert('Please fill in both fields.');
         return;
       }
@@ -216,7 +216,7 @@
       try {
         const res = await fetch('/api/services');
         const services = await res.json() || [];
-        services.push({ name, description: desc });
+        services.push({ title, description: desc });
         
         await fetch('/api/services', {
           method: 'POST',
@@ -262,7 +262,7 @@
         if (!svc) return;
         editIndex = index;
         document.getElementById('edit-id').value = index;
-        document.getElementById('edit-name').value = svc.name;
+        document.getElementById('edit-name').value = svc.title || svc.name;
         document.getElementById('edit-desc').value = svc.description;
         document.getElementById('edit-modal').classList.remove('hidden');
       } catch (err) {
@@ -276,9 +276,9 @@
 
     async function saveEdit() {
       const index = parseInt(document.getElementById('edit-id').value);
-      const name = document.getElementById('edit-name').value.trim();
+      const title = document.getElementById('edit-name').value.trim();
       const desc = document.getElementById('edit-desc').value.trim();
-      if (!name || !desc) {
+      if (!title || !desc) {
         alert('Please fill in both fields.');
         return;
       }
@@ -287,7 +287,7 @@
         const res = await fetch('/api/services');
         const services = await res.json() || [];
         if (index >= 0 && index < services.length) {
-          services[index] = { name, description: desc };
+          services[index] = { title, description: desc };
           
           await fetch('/api/services', {
             method: 'POST',
