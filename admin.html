@@ -41,6 +41,9 @@
       transition: all 0.2s;
       cursor: pointer;
       border: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
     }
     .btn-primary { background: #0D47A1; color: #fff; }
     .btn-primary:hover { background: #1565C0; }
@@ -72,16 +75,22 @@
 
       <!-- Login Section -->
       <div id="login-section">
+        <!-- Error Alert Message Container -->
+        <div id="login-error" class="hidden mb-4 p-3 bg-red-900/50 border border-red-500 text-red-200 rounded-lg text-sm text-center"></div>
+        
         <div class="space-y-4">
           <div>
             <label class="block mb-2 font-semibold">Password</label>
-            <input type="password" id="ADMIN_PASSWORD" placeholder="Enter admin password" />
+            <input type="password" id="admin-password" placeholder="Enter admin password" />
           </div>
           <div>
             <label class="block mb-2 font-semibold">Google Authenticator Code</label>
-            <input type="text" id="ADMIN_2FA" placeholder="Enter 6-digit code" />
+            <input type="text" id="admin-2fa" placeholder="Enter 6-digit code" />
           </div>
-          <button onclick="adminLogin()" class="btn btn-primary w-full">Login</button>
+          <button id="login-btn" onclick="adminLogin()" class="btn btn-primary w-full">
+            <span id="login-btn-text">Login</span>
+            <i id="login-spinner" class="fas fa-spinner fa-spin hidden ml-2"></i>
+          </button>
         </div>
       </div>
 
@@ -138,17 +147,43 @@
     // ── Admin functions ──
     let isLoggedIn = false;
 
+    function showError(msg) {
+      const errDiv = document.getElementById('login-error');
+      errDiv.textContent = msg;
+      errDiv.classList.remove('hidden');
+    }
+
+    function clearError() {
+      const errDiv = document.getElementById('login-error');
+      errDiv.textContent = '';
+      errDiv.classList.add('hidden');
+    }
+
     async function adminLogin() {
-      const pass = document.getElementById('ADMIN_PASSWORD').value;
-      const code = document.getElementById('ADMIN_2FA').value;
+      clearError();
+      
+      // Support both hyphenated and underscore ID variants
+      const passElem = document.getElementById('admin-password') || document.getElementById('admin_password');
+      const codeElem = document.getElementById('admin-2fa') || document.getElementById('admin_2fa');
+
+      const pass = passElem ? passElem.value.trim() : '';
+      const code = codeElem ? codeElem.value.trim() : '';
 
       if (!pass || !code) {
-        alert('Please fill in both fields.');
+        showError('Please fill in both password and authenticator code.');
         return;
       }
 
+      // UI Loading State Enable
+      const loginBtn = document.getElementById('login-btn');
+      const btnText = document.getElementById('login-btn-text');
+      const spinner = document.getElementById('login-spinner');
+
+      loginBtn.disabled = true;
+      btnText.textContent = 'Verifying...';
+      spinner.classList.remove('hidden');
+
       try {
-        // Cloudflare Worker-ലെ /api/login ലേക്ക് ക്രെഡൻഷ്യലുകൾ അയക്കുന്നു
         const res = await fetch('/api/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -162,19 +197,28 @@
           loadServices();
           updateStats();
         } else {
-          alert('Invalid credentials!');
+          showError('Invalid Credentials! Check password or 2FA code.');
         }
       } catch (err) {
-        alert('Login request failed! Check network connection.');
+        showError('Login request failed! Check your network connection.');
+      } finally {
+        // UI Loading State Reset
+        loginBtn.disabled = false;
+        btnText.textContent = 'Login';
+        spinner.classList.add('hidden');
       }
     }
 
     function adminLogout() {
+      clearError();
       document.getElementById('login-section').classList.remove('hidden');
       document.getElementById('dashboard-section').classList.add('hidden');
       isLoggedIn = false;
-      document.getElementById('ADMIN_PASSWORD').value = '';
-      document.getElementById('ADMIN_2FA').value = '';
+      
+      const passElem = document.getElementById('admin-password') || document.getElementById('admin_password');
+      const codeElem = document.getElementById('admin-2fa') || document.getElementById('admin_2fa');
+      if (passElem) passElem.value = '';
+      if (codeElem) codeElem.value = '';
     }
 
     async function updateStats() {
