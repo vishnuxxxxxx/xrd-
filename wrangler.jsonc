@@ -3,18 +3,14 @@
   "name": "daemonxrd",
   "main": "src/index.ts",
   "compatibility_date": "2025-02-04",
-  "observability": {
-    "enabled": true
+  "assets": {
+    "directory": "./"
   },
-
-  // Add this to your wrangler.jsonc
   "kv_namespaces": [
     {
       "binding": "KV",
-      "id": "74e39fc0c2e04447a9d6dd0dcc6028a5",
-      
-      // Optional: preview_id used when running `wrangler dev` for local dev
-      "preview_id": "<ID_OF_PREVIEW_KV_NAMESPACE_FOR_LOCAL_DEVELOPMENT>"
+      "id": "74e39fc0c2e04447a9d6dd0dcc6028a5"
     }
   ]
 }
+
