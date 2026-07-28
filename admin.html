@@ -139,8 +139,8 @@
     let isLoggedIn = false;
 
     async function adminLogin() {
-      const pass = document.getElementById('admin-password').value;
-      const code = document.getElementById('admin-2fa').value;
+      const pass = document.getElementById('ADMIN_PASSWORD').value;
+      const code = document.getElementById('ADMIN_2FA').value;
 
       if (!pass || !code) {
         alert('Please fill in both fields.');
@@ -173,8 +173,8 @@
       document.getElementById('login-section').classList.remove('hidden');
       document.getElementById('dashboard-section').classList.add('hidden');
       isLoggedIn = false;
-      document.getElementById('admin-password').value = '';
-      document.getElementById('admin-2fa').value = '';
+      document.getElementById('ADMIN_PASSWORD').value = '';
+      document.getElementById('ADMIN_2FA').value = '';
     }
 
     async function updateStats() {
