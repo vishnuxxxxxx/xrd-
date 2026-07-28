@@ -77,7 +77,7 @@
       <div id="login-section">
         <!-- Error Alert Message Container -->
         <div id="login-error" class="hidden mb-4 p-3 bg-red-900/50 border border-red-500 text-red-200 rounded-lg text-sm text-center"></div>
-        
+
         <div class="space-y-4">
           <div>
             <label class="block mb-2 font-semibold">Password</label>
@@ -143,6 +143,13 @@
     </div>
   </div>
 
+  <!-- Load credentials from separate config file -->
+  <script type="module">
+    import { ADMIN_PASSWORD, ADMIN_2FA } from './admin-config.js';
+    window.ADMIN_PASSWORD = ADMIN_PASSWORD;
+    window.ADMIN_2FA = ADMIN_2FA;
+  </script>
+
   <script>
     // ── Admin functions ──
     let isLoggedIn = false;
@@ -161,16 +168,11 @@
 
     async function adminLogin() {
       clearError();
-      
-      // Support both hyphenated and underscore ID variants
-      const passElem = document.getElementById('admin-password') || document.getElementById('admin_password');
-      const codeElem = document.getElementById('admin-2fa') || document.getElementById('admin_2fa');
-
-      const pass = passElem ? passElem.value.trim() : '';
-      const code = codeElem ? codeElem.value.trim() : '';
+      const pass = document.getElementById('admin-password').value.trim();
+      const code = document.getElementById('admin-2fa').value.trim();
 
       if (!pass || !code) {
-        showError('Please fill in both password and authenticator code.');
+        showError('Please fill in both fields.');
         return;
       }
 
@@ -183,30 +185,24 @@
       btnText.textContent = 'Verifying...';
       spinner.classList.remove('hidden');
 
-      try {
-        const res = await fetch('/api/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ password: pass, code: code }),
-        });
-
-        if (res.ok) {
+      // Brief timeout simulation for smooth UX transition
+      setTimeout(() => {
+        // credentials are set from the module import
+        if (pass === window.ADMIN_PASSWORD && code === window.ADMIN_2FA) {
           document.getElementById('login-section').classList.add('hidden');
           document.getElementById('dashboard-section').classList.remove('hidden');
           isLoggedIn = true;
           loadServices();
           updateStats();
         } else {
-          showError('Invalid Credentials! Check password or 2FA code.');
+          showError('Please check your password or authenticator code.');
         }
-      } catch (err) {
-        showError('Login request failed! Check your network connection.');
-      } finally {
-        // UI Loading State Reset
+
+        // Reset button state
         loginBtn.disabled = false;
         btnText.textContent = 'Login';
         spinner.classList.add('hidden');
-      }
+      }, 500);
     }
 
     function adminLogout() {
@@ -214,11 +210,8 @@
       document.getElementById('login-section').classList.remove('hidden');
       document.getElementById('dashboard-section').classList.add('hidden');
       isLoggedIn = false;
-      
-      const passElem = document.getElementById('admin-password') || document.getElementById('admin_password');
-      const codeElem = document.getElementById('admin-2fa') || document.getElementById('admin_2fa');
-      if (passElem) passElem.value = '';
-      if (codeElem) codeElem.value = '';
+      document.getElementById('admin-password').value = '';
+      document.getElementById('admin-2fa').value = '';
     }
 
     async function updateStats() {
