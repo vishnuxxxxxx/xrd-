@@ -220,6 +220,38 @@
       animation: float 3s ease-in-out infinite;
     }
     .glow-btn:nth-child(2) { animation-delay: 0.2s; }
+  
+    /* 100% Transparent Glass Buttons */
+.transparent-btn {
+  background-color: transparent !important;
+  background-image: none !important;
+  backdrop-filter: none !important;
+  box-shadow: none !important;
+  transition: all 0.3s ease-in-out;
+}
+
+/* Light Mode Styling (Black text & border) */
+body:not(.dark-mode) .transparent-btn {
+  color: #000000 !important;
+  border: 1.5px solid #000000 !important;
+}
+
+/* Light Mode Hover Effect */
+body:not(.dark-mode) .transparent-btn:hover {
+  background-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+/* Dark Mode Styling (White text & border) */
+body.dark-mode .transparent-btn {
+  color: #ffffff !important;
+  border: 1.5px solid #ffffff !important;
+}
+
+/* Dark Mode Hover Effect */
+body.dark-mode .transparent-btn:hover {
+  background-color: rgba(255, 255, 255, 0.15) !important;
+}
+    
   </style>
 </head>
 
