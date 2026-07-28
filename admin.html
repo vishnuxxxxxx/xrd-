@@ -134,29 +134,38 @@
     </div>
   </div>
 
-  <!-- Load credentials from separate config file -->
-  <script type="module">
-    import { ADMIN_PASSWORD, ADMIN_2FA } from './admin-config.js';
-    window.ADMIN_PASSWORD = ADMIN_PASSWORD;
-    window.ADMIN_2FA = ADMIN_2FA;
-  </script>
-
   <script>
     // ── Admin functions ──
     let isLoggedIn = false;
 
-    function adminLogin() {
+    async function adminLogin() {
       const pass = document.getElementById('admin-password').value;
       const code = document.getElementById('admin-2fa').value;
-      // credentials are set from the module import
-      if (pass === window.ADMIN_PASSWORD && code === window.ADMIN_2FA) {
-        document.getElementById('login-section').classList.add('hidden');
-        document.getElementById('dashboard-section').classList.remove('hidden');
-        isLoggedIn = true;
-        loadServices();
-        updateStats();
-      } else {
-        alert('Invalid credentials!');
+
+      if (!pass || !code) {
+        alert('Please fill in both fields.');
+        return;
+      }
+
+      try {
+        // Cloudflare Worker-ലെ /api/login ലേക്ക് ക്രെഡൻഷ്യലുകൾ അയക്കുന്നു
+        const res = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: pass, code: code }),
+        });
+
+        if (res.ok) {
+          document.getElementById('login-section').classList.add('hidden');
+          document.getElementById('dashboard-section').classList.remove('hidden');
+          isLoggedIn = true;
+          loadServices();
+          updateStats();
+        } else {
+          alert('Invalid credentials!');
+        }
+      } catch (err) {
+        alert('Login request failed! Check network connection.');
       }
     }
 
