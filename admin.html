@@ -8,145 +8,265 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <style>
     body {
-      background: #121212;
-      color: #fff;
+      background: #080b10;
+      color: #e2e8f0;
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      overflow-x: hidden;
+      position: relative;
     }
-    .glass {
-      background: rgba(255, 255, 255, 0.05);
-      backdrop-filter: blur(10px);
+
+    #particles-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .main-wrapper {
+      position: relative;
+      z-index: 10;
+    }
+
+    .glass-card {
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 0 0 20px rgba(13, 71, 161, 0.15);
+      border-radius: 20px;
+    }
+
+    .input-field {
+      background: rgba(30, 41, 59, 0.7);
       border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 16px;
-    }
-    input, textarea {
-      background: #1e1e1e;
-      border: 1px solid #333;
-      color: #fff;
-      border-radius: 8px;
-      padding: 10px 14px;
+      color: #f8fafc;
+      border-radius: 10px;
+      padding: 12px 16px;
       width: 100%;
       outline: none;
+      transition: all 0.3s ease;
     }
-    input:focus, textarea:focus {
-      border-color: #0D47A1;
+
+    .input-field:focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 12px rgba(59, 130, 246, 0.3);
+      background: rgba(30, 41, 59, 0.9);
     }
-    .btn {
-      padding: 10px 20px;
-      border-radius: 8px;
-      font-weight: 600;
-      transition: all 0.2s;
-      cursor: pointer;
-      border: none;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
+
+    .btn-glow {
+      position: relative;
+      transition: all 0.3s ease;
+      overflow: hidden;
     }
-    .btn-primary { background: #0D47A1; color: #fff; }
-    .btn-primary:hover { background: #1565C0; }
-    .btn-danger { background: #c62828; color: #fff; }
-    .btn-danger:hover { background: #d32f2f; }
-    .btn-success { background: #2e7d32; color: #fff; }
-    .btn-success:hover { background: #388e3c; }
-    .btn-warning { background: #f57f17; color: #fff; }
-    .btn-warning:hover { background: #f9a825; }
-    .service-item {
-      background: #1e1e1e;
-      padding: 12px 16px;
-      border-radius: 8px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 8px;
+
+    .btn-glow:hover {
+      box-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
+      transform: translateY(-1px);
     }
-    .service-item .actions button {
-      margin-left: 8px;
+
+    .service-card {
+      background: rgba(30, 41, 59, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      transition: all 0.2s ease;
     }
-    .hidden { display: none; }
+
+    .service-card:hover {
+      border-color: rgba(59, 130, 246, 0.3);
+      background: rgba(30, 41, 59, 0.8);
+    }
+
+    .hidden { display: none !important; }
   </style>
 </head>
-<body>
-  <div class="container mx-auto px-4 py-8 max-w-4xl">
-    <div class="glass p-8 rounded-2xl">
-      <h1 class="text-3xl font-bold mb-6 text-center">Admin Panel</h1>
+<body class="flex items-center justify-center p-4">
+
+  <!-- Background Particle Animation -->
+  <canvas id="particles-canvas"></canvas>
+
+  <div class="main-wrapper w-full max-w-3xl my-8">
+    <div class="glass-card p-6 md:p-10">
+      
+      <!-- Brand Header -->
+      <div class="text-center mb-8">
+        <h1 class="text-3xl md:text-4xl font-extrabold tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-500">
+          DaemonXRD
+        </h1>
+        <p class="text-sm text-gray-400 mt-1">Admin Control Center</p>
+      </div>
 
       <!-- Login Section -->
-      <div id="login-section">
-        <div id="login-error" class="hidden mb-4 p-3 bg-red-900/50 border border-red-500 text-red-200 rounded-lg text-sm text-center"></div>
+      <div id="login-section" class="max-w-md mx-auto">
+        <div id="login-error" class="hidden mb-6 p-3 bg-red-900/40 border border-red-500/50 text-red-200 rounded-xl text-sm text-center backdrop-blur-md"></div>
 
-        <div class="space-y-4">
+        <div class="space-y-5">
           <div>
-            <label class="block mb-2 font-semibold">Password</label>
-            <input type="password" id="admin-password" placeholder="Enter admin password" />
+            <label class="block mb-2 text-sm font-medium text-gray-300">Admin Password</label>
+            <input type="password" id="admin-password" class="input-field" placeholder="••••••••••••" />
           </div>
           <div>
-            <label class="block mb-2 font-semibold">Google Authenticator Code</label>
-            <input type="text" id="admin-2fa" placeholder="Enter 6-digit code" />
+            <label class="block mb-2 text-sm font-medium text-gray-300">Google Authenticator Code</label>
+            <input type="text" id="admin-2fa" class="input-field" placeholder="6-digit verification code" maxlength="6" />
           </div>
-          <button id="login-btn" onclick="adminLogin()" class="btn btn-primary w-full">
-            <span id="login-btn-text">Login</span>
+          <button id="login-btn" onclick="adminLogin()" class="btn-glow w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold py-3 px-6 rounded-xl text-center">
+            <span id="login-btn-text">Authenticate</span>
             <i id="login-spinner" class="fas fa-spinner fa-spin hidden ml-2"></i>
           </button>
         </div>
       </div>
 
-      <!-- Dashboard (hidden until login) -->
-      <div id="dashboard-section" class="hidden">
-        <div class="grid md:grid-cols-2 gap-4 mb-8">
-          <div class="bg-blue-600 p-6 rounded-lg">
-            <h3 class="text-lg font-semibold mb-2">Total Visitors</h3>
-            <p class="text-3xl font-bold" id="total-visitors">1,234</p>
+      <!-- Dashboard Section (Hidden by default) -->
+      <div id="dashboard-section" class="hidden space-y-8">
+        
+        <!-- Stats Widgets -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="glass-card p-5 border-l-4 border-blue-500">
+            <p class="text-xs font-semibold text-blue-400 uppercase tracking-wider mb-1">Total Visitors</p>
+            <p class="text-3xl font-bold text-white" id="total-visitors">1,234</p>
           </div>
-          <div class="bg-green-600 p-6 rounded-lg">
-            <h3 class="text-lg font-semibold mb-2">Visitors Today</h3>
-            <p class="text-3xl font-bold" id="visitors-today">42</p>
+          <div class="glass-card p-5 border-l-4 border-emerald-500">
+            <p class="text-xs font-semibold text-emerald-400 uppercase tracking-wider mb-1">Visitors Today</p>
+            <p class="text-3xl font-bold text-white" id="visitors-today">42</p>
           </div>
         </div>
 
-        <h2 class="text-2xl font-bold mb-4">Manage Services</h2>
+        <!-- Manage Services Header -->
+        <div class="border-t border-gray-800 pt-6">
+          <h2 class="text-2xl font-bold mb-4 text-white flex items-center gap-2">
+            <i class="fas fa-server text-blue-400 text-lg"></i> Manage Services
+          </h2>
 
-        <!-- Add Service Form -->
-        <div class="bg-gray-800 p-4 rounded-lg mb-6">
-          <h3 class="text-xl font-semibold mb-3">Add New Service</h3>
-          <div class="grid md:grid-cols-2 gap-4">
-            <input type="text" id="new-service-name" placeholder="Service Name" />
-            <textarea id="new-service-desc" placeholder="Service Description" rows="2"></textarea>
-          </div>
-          <button onclick="addService()" class="btn btn-success mt-3">Add Service</button>
-        </div>
-
-        <!-- Service List -->
-        <div id="service-list" class="space-y-2">
-          <!-- populated by JavaScript -->
-        </div>
-
-        <!-- Edit Modal (hidden) -->
-        <div id="edit-modal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div class="bg-gray-800 p-6 rounded-lg max-w-md w-full">
-            <h3 class="text-xl font-bold mb-4">Edit Service</h3>
-            <input type="hidden" id="edit-id" />
-            <input type="text" id="edit-name" class="mb-2" placeholder="Service Name" />
-            <textarea id="edit-desc" class="mb-4" placeholder="Service Description" rows="3"></textarea>
-            <div class="flex justify-end space-x-2">
-              <button onclick="closeEditModal()" class="btn btn-danger">Cancel</button>
-              <button onclick="saveEdit()" class="btn btn-primary">Save</button>
+          <!-- Add Service Card -->
+          <div class="bg-slate-900/60 border border-gray-800 p-5 rounded-xl mb-6">
+            <h3 class="text-md font-semibold text-gray-300 mb-3">Add New Service</h3>
+            <div class="space-y-3">
+              <input type="text" id="new-service-name" class="input-field" placeholder="Service Title" />
+              <textarea id="new-service-desc" class="input-field" placeholder="Service Description" rows="2"></textarea>
+              <button onclick="addService()" class="btn-glow bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold py-2 px-5 rounded-lg flex items-center gap-2">
+                <i class="fas fa-plus"></i> Add Service
+              </button>
             </div>
           </div>
+
+          <!-- Service List Container -->
+          <div id="service-list" class="space-y-3">
+            <!-- Populated via JS -->
+          </div>
         </div>
 
-        <button onclick="adminLogout()" class="btn btn-danger w-full mt-6">Logout</button>
+        <!-- Logout Button -->
+        <button onclick="adminLogout()" class="w-full bg-red-600/20 hover:bg-red-600/30 text-red-400 border border-red-500/30 font-semibold py-2.5 rounded-xl transition-all duration-200">
+          <i class="fas fa-sign-out-alt mr-2"></i> Logout
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Custom Edit Modal -->
+  <div id="edit-modal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div class="glass-card max-w-lg w-full p-6 space-y-4">
+      <h3 class="text-xl font-bold text-white mb-2">Edit Service</h3>
+      <input type="hidden" id="edit-id" />
+      <div>
+        <label class="block text-xs font-semibold text-gray-400 mb-1">Title</label>
+        <input type="text" id="edit-name" class="input-field" />
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-gray-400 mb-1">Description</label>
+        <textarea id="edit-desc" class="input-field" rows="3"></textarea>
+      </div>
+      <div class="flex justify-end gap-2 pt-2">
+        <button onclick="closeEditModal()" class="px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-sm font-medium">Cancel</button>
+        <button onclick="saveEdit()" class="btn-glow px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-sm font-medium">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Custom Delete Confirmation Modal -->
+  <div id="confirm-modal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div class="glass-card max-w-sm w-full p-6 text-center space-y-4">
+      <div class="w-12 h-12 bg-red-500/20 border border-red-500/30 rounded-full flex items-center justify-center mx-auto text-red-400 text-xl">
+        <i class="fas fa-exclamation-triangle"></i>
+      </div>
+      <h3 class="text-lg font-bold text-white">Delete Service?</h3>
+      <p class="text-sm text-gray-400">Are you sure you want to remove this service? This action cannot be undone.</p>
+      <div class="flex justify-center gap-3 pt-2">
+        <button onclick="closeConfirmModal()" class="px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-sm font-medium">Cancel</button>
+        <button id="confirm-delete-btn" class="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-500 text-sm font-medium text-white">Delete</button>
       </div>
     </div>
   </div>
 
   <script>
-    // Global state for credentials during session
+    // Global Auth Variables
     let authPassword = '';
     let auth2FA = '';
+    let deleteTargetIndex = -1;
 
+    // --- Node Particles Animation ---
+    const canvas = document.getElementById('particles-canvas');
+    const ctx = canvas.getContext('2d');
+    let particles = [];
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    class Particle {
+      constructor() {
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height;
+        this.vx = (Math.random() - 0.5) * 0.8;
+        this.vy = (Math.random() - 0.5) * 0.8;
+        this.radius = Math.random() * 1.5 + 1;
+      }
+      update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
+        if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+      }
+      draw() {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(59, 130, 246, 0.5)';
+        ctx.fill();
+      }
+    }
+
+    for (let i = 0; i < 45; i++) particles.push(new Particle());
+
+    function animateParticles() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      particles.forEach((p, index) => {
+        p.update();
+        p.draw();
+        for (let j = index + 1; j < particles.length; j++) {
+          const p2 = particles[j];
+          const dist = Math.hypot(p.x - p2.x, p.y - p2.y);
+          if (dist < 120) {
+            ctx.beginPath();
+            ctx.moveTo(p.x, p.y);
+            ctx.lineTo(p2.x, p2.y);
+            ctx.strokeStyle = `rgba(59, 130, 246, ${1 - dist / 120})`;
+            ctx.lineWidth = 0.5;
+            ctx.stroke();
+          }
+        }
+      });
+      requestAnimationFrame(animateParticles);
+    }
+    animateParticles();
+
+    // --- UI Helper Functions ---
     function showError(msg) {
       const errDiv = document.getElementById('login-error');
       errDiv.textContent = msg;
@@ -159,6 +279,7 @@
       errDiv.classList.add('hidden');
     }
 
+    // --- Auth Logic ---
     async function adminLogin() {
       clearError();
       const pass = document.getElementById('admin-password').value.trim();
@@ -178,14 +299,12 @@
       spinner.classList.remove('hidden');
 
       try {
-        // ഇ നിലവിലെ ഡാറ്റ എടുത്ത് Auth ക്രെഡൻഷ്യൽസ് ശരിയാണോ എന്ന് ടെസ്റ്റ് ചെയ്യുന്നു
         authPassword = pass;
         auth2FA = code;
 
         const res = await fetch('/api/services');
         const services = await res.json() || [];
 
-        // വെരിഫൈ ചെയ്യാനായി ഇതേ സെഷൻ പാസ്‌വേഡ് ഉപയോഗിച്ച് വാലിഡേഷൻ റിക്വസ്റ്റ് അയക്കുന്നു
         const testRes = await fetch('/api/services', {
           method: 'POST',
           headers: { 
@@ -210,7 +329,7 @@
         showError('Login failed. Please try again.');
       } finally {
         loginBtn.disabled = false;
-        btnText.textContent = 'Login';
+        btnText.textContent = 'Authenticate';
         spinner.classList.add('hidden');
       }
     }
@@ -242,17 +361,22 @@
         const services = await res.json();
         const list = document.getElementById('service-list');
         list.innerHTML = '';
+
         services.forEach((svc, idx) => {
           const div = document.createElement('div');
-          div.className = 'service-item';
+          div.className = 'service-card p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3';
           div.innerHTML = `
-            <div>
-              <h4 class="font-bold">${svc.title || svc.name}</h4>
-              <p class="text-sm opacity-70">${svc.description}</p>
+            <div class="space-y-1">
+              <h4 class="font-bold text-blue-300 text-base">${svc.title || svc.name}</h4>
+              <p class="text-xs text-gray-400 leading-relaxed">${svc.description}</p>
             </div>
-            <div class="actions">
-              <button onclick="editService(${idx})" class="btn btn-warning text-sm">Edit</button>
-              <button onclick="deleteService(${idx})" class="btn btn-danger text-sm">Delete</button>
+            <div class="flex items-center gap-2 self-end sm:self-center">
+              <button onclick="editService(${idx})" class="bg-amber-600/20 hover:bg-amber-600/30 text-amber-400 border border-amber-500/30 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all">
+                <i class="fas fa-edit mr-1"></i> Edit
+              </button>
+              <button onclick="confirmDelete(${idx})" class="bg-red-600/20 hover:bg-red-600/30 text-red-400 border border-red-500/30 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all">
+                <i class="fas fa-trash-alt mr-1"></i> Delete
+              </button>
             </div>
           `;
           list.appendChild(div);
@@ -291,16 +415,27 @@
         document.getElementById('new-service-desc').value = '';
         loadServices();
       } catch (err) {
-        alert("Failed to add service. Please check session.");
+        alert("Failed to add service.");
       }
     }
 
-    async function deleteService(index) {
-      if (!confirm('Delete this service?')) return;
+    // --- Custom Delete Modal Logic ---
+    function confirmDelete(index) {
+      deleteTargetIndex = index;
+      document.getElementById('confirm-modal').classList.remove('hidden');
+    }
+
+    function closeConfirmModal() {
+      deleteTargetIndex = -1;
+      document.getElementById('confirm-modal').classList.add('hidden');
+    }
+
+    document.getElementById('confirm-delete-btn').onclick = async function() {
+      if (deleteTargetIndex === -1) return;
       try {
         const res = await fetch('/api/services');
         const services = await res.json() || [];
-        services.splice(index, 1);
+        services.splice(deleteTargetIndex, 1);
 
         const saveRes = await fetch('/api/services', {
           method: 'POST',
@@ -314,21 +449,21 @@
 
         if (!saveRes.ok) throw new Error('Unauthorized');
 
+        closeConfirmModal();
         loadServices();
       } catch (err) {
         alert("Failed to delete service.");
       }
-    }
+    };
 
-    let editIndex = -1;
-
+    // --- Edit Modal Logic ---
     async function editService(index) {
       try {
         const res = await fetch('/api/services');
         const services = await res.json() || [];
         const svc = services[index];
         if (!svc) return;
-        editIndex = index;
+        
         document.getElementById('edit-id').value = index;
         document.getElementById('edit-name').value = svc.title || svc.name;
         document.getElementById('edit-desc').value = svc.description;
@@ -379,3 +514,4 @@
   </script>
 </body>
 </html>
+
