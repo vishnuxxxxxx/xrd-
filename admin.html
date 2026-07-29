@@ -75,7 +75,6 @@
 
       <!-- Login Section -->
       <div id="login-section">
-        <!-- Error Alert Message Container -->
         <div id="login-error" class="hidden mb-4 p-3 bg-red-900/50 border border-red-500 text-red-200 rounded-lg text-sm text-center"></div>
 
         <div class="space-y-4">
@@ -143,16 +142,10 @@
     </div>
   </div>
 
-  <!-- Load credentials from separate config file -->
-  <script type="module">
-    import { ADMIN_PASSWORD, ADMIN_2FA } from './admin-config.js';
-    window.ADMIN_PASSWORD = ADMIN_PASSWORD;
-    window.ADMIN_2FA = ADMIN_2FA;
-  </script>
-
   <script>
-    // ── Admin functions ──
-    let isLoggedIn = false;
+    // Global state for credentials during session
+    let authPassword = '';
+    let auth2FA = '';
 
     function showError(msg) {
       const errDiv = document.getElementById('login-error');
@@ -176,7 +169,6 @@
         return;
       }
 
-      // UI Loading State Enable
       const loginBtn = document.getElementById('login-btn');
       const btnText = document.getElementById('login-btn-text');
       const spinner = document.getElementById('login-spinner');
@@ -185,31 +177,50 @@
       btnText.textContent = 'Verifying...';
       spinner.classList.remove('hidden');
 
-      // Brief timeout simulation for smooth UX transition
-      setTimeout(() => {
-        // credentials are set from the module import
-        if (pass === window.ADMIN_PASSWORD && code === window.ADMIN_2FA) {
+      try {
+        // ഇ നിലവിലെ ഡാറ്റ എടുത്ത് Auth ക്രെഡൻഷ്യൽസ് ശരിയാണോ എന്ന് ടെസ്റ്റ് ചെയ്യുന്നു
+        authPassword = pass;
+        auth2FA = code;
+
+        const res = await fetch('/api/services');
+        const services = await res.json() || [];
+
+        // വെരിഫൈ ചെയ്യാനായി ഇതേ സെഷൻ പാസ്‌വേഡ് ഉപയോഗിച്ച് വാലിഡേഷൻ റിക്വസ്റ്റ് അയക്കുന്നു
+        const testRes = await fetch('/api/services', {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'X-Admin-Password': authPassword,
+            'X-Admin-2FA': auth2FA
+          },
+          body: JSON.stringify(services)
+        });
+
+        if (testRes.status === 401) {
+          showError('Invalid Password or Authenticator Code.');
+          authPassword = '';
+          auth2FA = '';
+        } else {
           document.getElementById('login-section').classList.add('hidden');
           document.getElementById('dashboard-section').classList.remove('hidden');
-          isLoggedIn = true;
           loadServices();
           updateStats();
-        } else {
-          showError('Please check your password or authenticator code.');
         }
-
-        // Reset button state
+      } catch (err) {
+        showError('Login failed. Please try again.');
+      } finally {
         loginBtn.disabled = false;
         btnText.textContent = 'Login';
         spinner.classList.add('hidden');
-      }, 500);
+      }
     }
 
     function adminLogout() {
       clearError();
+      authPassword = '';
+      auth2FA = '';
       document.getElementById('login-section').classList.remove('hidden');
       document.getElementById('dashboard-section').classList.add('hidden');
-      isLoggedIn = false;
       document.getElementById('admin-password').value = '';
       document.getElementById('admin-2fa').value = '';
     }
@@ -264,17 +275,23 @@
         const services = await res.json() || [];
         services.push({ title, description: desc });
         
-        await fetch('/api/services', {
+        const saveRes = await fetch('/api/services', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'X-Admin-Password': authPassword,
+            'X-Admin-2FA': auth2FA
+          },
           body: JSON.stringify(services)
         });
+
+        if (!saveRes.ok) throw new Error('Unauthorized');
 
         document.getElementById('new-service-name').value = '';
         document.getElementById('new-service-desc').value = '';
         loadServices();
       } catch (err) {
-        alert("Failed to add service");
+        alert("Failed to add service. Please check session.");
       }
     }
 
@@ -285,19 +302,24 @@
         const services = await res.json() || [];
         services.splice(index, 1);
 
-        await fetch('/api/services', {
+        const saveRes = await fetch('/api/services', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'X-Admin-Password': authPassword,
+            'X-Admin-2FA': auth2FA
+          },
           body: JSON.stringify(services)
         });
 
+        if (!saveRes.ok) throw new Error('Unauthorized');
+
         loadServices();
       } catch (err) {
-        alert("Failed to delete service");
+        alert("Failed to delete service.");
       }
     }
 
-    // ── Edit functions ──
     let editIndex = -1;
 
     async function editService(index) {
@@ -335,20 +357,25 @@
         if (index >= 0 && index < services.length) {
           services[index] = { title, description: desc };
           
-          await fetch('/api/services', {
+          const saveRes = await fetch('/api/services', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+              'Content-Type': 'application/json',
+              'X-Admin-Password': authPassword,
+              'X-Admin-2FA': auth2FA
+            },
             body: JSON.stringify(services)
           });
+
+          if (!saveRes.ok) throw new Error('Unauthorized');
 
           loadServices();
           closeEditModal();
         }
       } catch (err) {
-        alert("Failed to save edit");
+        alert("Failed to save edit.");
       }
     }
   </script>
 </body>
 </html>
-
