@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <!-- പ്രധാന പേജ് അല്ലെങ്കിൽ പോർട്ട്‌ഫോളിയോ -->
+  <url>
+    <loc>https://daemonxrd.vercel.app/</loc>
+    <lastmod>2026-07-29</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <!-- അഡ്മിൻ പാനൽ പേജ് -->
+  <url>
+    <loc>https://daemonxrd.vercel.app/admin.html</loc>
+    <lastmod>2026-07-29</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+</urlset>
+
