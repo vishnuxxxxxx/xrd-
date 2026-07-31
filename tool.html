@@ -1271,9 +1271,10 @@ async function lookupMac() {
     resDiv.innerHTML = '<i class="fas fa-spinner fa-spin text-blue-400"></i> Fetching MAC details...';
 
     const targetUrl = `https://api.maclookup.app/v2/macs/${encodeURIComponent(mac)}`;
+    const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`;
 
     try {
-        const response = await fetch(targetUrl);
+        const response = await fetch(proxyUrl);
         const actualData = await response.json();
 
         if (actualData && actualData.success) {
@@ -1295,8 +1296,8 @@ async function lookupMac() {
     } catch (err) {
         resDiv.innerHTML = `<span class="text-red-400">Error: Network or server connection failed.</span>`;
     }
-    }
-    
+}
+
 
 
 
