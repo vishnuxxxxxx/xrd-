@@ -248,22 +248,7 @@
                     <div id="macResult" class="mt-4 p-4 rounded-lg bg-black/40 text-xs space-y-1.5 font-mono text-gray-300 hidden"></div>
                 </div>
 
-                <!-- 7. Directory Enumerator (no API key) -->
-                <div class="glass-card p-6 flex flex-col justify-between">
-                    <div>
-                        <div class="flex items-center space-x-3 mb-4">
-                            <i class="fas fa-folder-open text-cyan-400 text-2xl"></i>
-                            <h2 class="text-xl font-bold">Directory Enumerator</h2>
-                        </div>
-                        <div class="space-y-3">
-                            <input type="text" id="targetUrlInput" placeholder="Enter URL (e.g. https://example.com)" class="w-full px-4 py-2.5 rounded-lg custom-input text-sm">
-                            <button onclick="startDirectoryScan()" class="w-full py-2.5 rounded-lg glow-btn font-semibold text-sm">
-                                <i class="fas fa-search mr-2"></i> Scan Directories
-                            </button>
-                        </div>
-                    </div>
-                    <div id="scanResults" class="mt-4 p-4 rounded-lg bg-black/40 text-xs space-y-1.5 font-mono text-gray-300 hidden"></div>
-                </div>
+               
 
                 <!-- 8. ImgBB Image Host (API key placeholder) -->
                 <div class="glass-card p-6 flex flex-col justify-between">
@@ -796,42 +781,7 @@ async function checkIP() {
     // All attempts failed
     showError(resDiv, 'MAC address not found or lookup services are temporarily unavailable. Please try again later.');
 }
-        // ==========================
-        // 7. Directory Enumerator
-        // ==========================
-        async function startDirectoryScan() {
-            const urlInput = document.getElementById('targetUrlInput').value.trim();
-            const resDiv = document.getElementById('scanResults');
-            if (!urlInput) { showError(resDiv, 'Please enter a valid URL.'); return; }
-            const commonPaths = [
-                'admin', 'login', 'dashboard', 'api', 'uploads',
-                'config', 'backup', 'test', 'secret', 'wp-admin',
-                'server-status', 'robots.txt', '.git', 'database', 'panel'
-            ];
-            showLoading(resDiv, 'Scanning directories, please wait...');
-            let foundPaths = [];
-            let cleanUrl = urlInput.replace(/\/$/, '');
-            for (let path of commonPaths) {
-                let target = `${cleanUrl}/${path}`;
-                let proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(target)}`;
-                try {
-                    let response = await fetch(proxyUrl, { method: 'GET' });
-                    if (response.status === 200 || response.status === 403) {
-                        foundPaths.push({ path: target, status: response.status });
-                    }
-                } catch (e) { /* ignore */ }
-            }
-            if (foundPaths.length > 0) {
-                let listHtml = `<div><strong class="text-green-400">Found Directories (${foundPaths.length}):</strong></div>`;
-                foundPaths.forEach(item => {
-                    const statusColor = item.status === 200 ? 'text-green-400' : 'text-yellow-400';
-                    listHtml += `<div class="mt-1"><span class="${statusColor}">[${item.status}]</span> <span class="text-cyan-300">${item.path}</span></div>`;
-                });
-                resDiv.innerHTML = listHtml;
-            } else {
-                showError(resDiv, 'No active directories found or blocked by security policies.');
-            }
-        }
+        
 
         // ==========================
         // 8. ImgBB Upload (replace key)
