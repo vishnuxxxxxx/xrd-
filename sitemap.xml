@@ -7,6 +7,15 @@
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
+
+  <!-- ടൂൾ പേജ് -->
+  <url>
+    <loc>https://daemonxrd.vercel.app/tool</loc>
+    <lastmod>2026-07-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
   <!-- അഡ്മിൻ പാനൽ പേജ് -->
   <url>
     <loc>https://daemonxrd.vercel.app/admin.html</loc>
@@ -15,4 +24,3 @@
     <priority>0.5</priority>
   </url>
 </urlset>
-
