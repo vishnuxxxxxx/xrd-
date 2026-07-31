@@ -710,38 +710,92 @@ async function checkIP() {
         // 6. MAC Address Lookup (public)
         // ==========================
         async function lookupMac() {
-            const mac = document.getElementById('macInput').value.trim().toUpperCase();
-            const resDiv = document.getElementById('macResult');
-            if (!mac) { showError(resDiv, 'Please enter a valid MAC address.'); return; }
-            showLoading(resDiv, 'Fetching MAC details...');
-            try {
-                // Use a CORS proxy (since maclookup.app doesn't support CORS)
-                const proxy = 'https://api.allorigins.win/get?url=';
-                const target = `https://api.maclookup.app/v2/macs/${encodeURIComponent(mac)}`;
-                const response = await fetch(proxy + encodeURIComponent(target));
-                const data = await response.json();
-                const actualData = JSON.parse(data.contents);
-                if (actualData && actualData.success) {
-                    resDiv.innerHTML = `
-                        <div><strong class="text-green-400">Status:</strong> Found ✔️</div>
-                        <div><strong class="text-blue-400">MAC Prefix:</strong> ${actualData.macPrefix || 'N/A'}</div>
-                        <div><strong class="text-blue-400">Company:</strong> ${actualData.company || 'N/A'}</div>
-                        <div><strong class="text-blue-400">Address:</strong> ${actualData.address || 'N/A'}</div>
-                        <div><strong class="text-blue-400">Country:</strong> ${actualData.country || 'N/A'}</div>
-                        <div><strong class="text-blue-400">Block Start:</strong> ${actualData.blockStart || 'N/A'}</div>
-                        <div><strong class="text-blue-400">Block End:</strong> ${actualData.blockEnd || 'N/A'}</div>
-                        <div><strong class="text-blue-400">Block Size:</strong> ${actualData.blockSize || 'N/A'}</div>
-                        <div><strong class="text-blue-400">Block Type:</strong> ${actualData.blockType || 'N/A'}</div>
-                        <div><strong class="text-blue-400">Updated:</strong> ${actualData.updated || 'N/A'}</div>
-                    `;
-                } else {
-                    showError(resDiv, 'MAC address not found or invalid format.');
-                }
-            } catch (err) {
-                showError(resDiv, 'Network error: ' + err.message);
+    const mac = document.getElementById('macInput').value.trim().toUpperCase();
+    const resDiv = document.getElementById('macResult');
+
+    if (!mac) {
+        showError(resDiv, 'Please enter a valid MAC address.');
+        return;
+    }
+
+    showLoading(resDiv, 'Fetching MAC details...');
+
+    // Clean and validate MAC
+    const cleanMac = mac.replace(/[^0-9A-F]/g, '');
+    if (cleanMac.length !== 12) {
+        showError(resDiv, 'Invalid MAC format. Use e.g. B4:DF:43:01:23:45');
+        return;
+    }
+
+    // Try direct API calls first (some are CORS-friendly)
+    try {
+        // 1) Try macvendors.com (simple, often allows CORS)
+        const vendorResp = await fetch(`https://api.macvendors.com/${cleanMac}`);
+        if (vendorResp.ok) {
+            const vendor = await vendorResp.text();
+            if (vendor && vendor !== 'Not Found') {
+                resDiv.innerHTML = `
+                    <div><strong class="text-green-400">Vendor found</strong></div>
+                    <div><strong class="text-blue-400">Company:</strong> ${vendor}</div>
+                    <div class="text-gray-400 text-xs mt-2">(via macvendors.com)</div>
+                `;
+                return;
             }
         }
+    } catch (e) { /* ignore, will fallback */ }
 
+    // 2) Try maclookup.app (may or may not support CORS)
+    try {
+        const lookupResp = await fetch(`https://api.maclookup.app/v2/macs/${cleanMac}`);
+        if (lookupResp.ok) {
+            const data = await lookupResp.json();
+            if (data && data.success) {
+                resDiv.innerHTML = `
+                    <div><strong class="text-green-400">Status:</strong> Found ✔️</div>
+                    <div><strong class="text-blue-400">MAC Prefix:</strong> ${data.macPrefix || 'N/A'}</div>
+                    <div><strong class="text-blue-400">Company:</strong> ${data.company || 'N/A'}</div>
+                    <div><strong class="text-blue-400">Address:</strong> ${data.address || 'N/A'}</div>
+                    <div><strong class="text-blue-400">Country:</strong> ${data.country || 'N/A'}</div>
+                    <div><strong class="text-blue-400">Block Start:</strong> ${data.blockStart || 'N/A'}</div>
+                    <div><strong class="text-blue-400">Block End:</strong> ${data.blockEnd || 'N/A'}</div>
+                    <div><strong class="text-blue-400">Block Size:</strong> ${data.blockSize || 'N/A'}</div>
+                    <div><strong class="text-blue-400">Block Type:</strong> ${data.blockType || 'N/A'}</div>
+                    <div><strong class="text-blue-400">Updated:</strong> ${data.updated || 'N/A'}</div>
+                `;
+                return;
+            }
+        }
+    } catch (e) { /* fallback to proxy */ }
+
+    // 3) Final fallback: use a CORS proxy for maclookup.app
+    try {
+        const proxy = 'https://api.allorigins.win/raw?url=';
+        const target = `https://api.maclookup.app/v2/macs/${cleanMac}`;
+        const proxyResp = await fetch(proxy + encodeURIComponent(target));
+        if (proxyResp.ok) {
+            const text = await proxyResp.text();
+            const data = JSON.parse(text);
+            if (data && data.success) {
+                resDiv.innerHTML = `
+                    <div><strong class="text-green-400">Status:</strong> Found ✔️ (via proxy)</div>
+                    <div><strong class="text-blue-400">MAC Prefix:</strong> ${data.macPrefix || 'N/A'}</div>
+                    <div><strong class="text-blue-400">Company:</strong> ${data.company || 'N/A'}</div>
+                    <div><strong class="text-blue-400">Address:</strong> ${data.address || 'N/A'}</div>
+                    <div><strong class="text-blue-400">Country:</strong> ${data.country || 'N/A'}</div>
+                    <div><strong class="text-blue-400">Block Start:</strong> ${data.blockStart || 'N/A'}</div>
+                    <div><strong class="text-blue-400">Block End:</strong> ${data.blockEnd || 'N/A'}</div>
+                    <div><strong class="text-blue-400">Block Size:</strong> ${data.blockSize || 'N/A'}</div>
+                    <div><strong class="text-blue-400">Block Type:</strong> ${data.blockType || 'N/A'}</div>
+                    <div><strong class="text-blue-400">Updated:</strong> ${data.updated || 'N/A'}</div>
+                `;
+                return;
+            }
+        }
+    } catch (e) { /* all failed */ }
+
+    // All attempts failed
+    showError(resDiv, 'MAC address not found or lookup services are temporarily unavailable. Please try again later.');
+}
         // ==========================
         // 7. Directory Enumerator
         // ==========================
