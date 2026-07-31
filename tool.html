@@ -537,30 +537,41 @@
         // ==========================
         // 1. IP Lookup
         // ==========================
-        async function checkIP() {
-            const ip = document.getElementById('ipInput').value.trim();
-            const resDiv = document.getElementById('ipResult');
-            if (!ip) { showError(resDiv, 'Please enter an IP address.'); return; }
-            showLoading(resDiv, 'Fetching geolocation...');
-            try {
-                const response = await fetch(`http://ip-api.com/json/${encodeURIComponent(ip)}`);
-                const data = await response.json();
-                if (data.status === 'success') {
-                    resDiv.innerHTML = `
-                        <div><strong class="text-blue-400">IP:</strong> ${data.query}</div>
-                        <div><strong class="text-blue-400">Country:</strong> ${data.country} (${data.countryCode})</div>
-                        <div><strong class="text-blue-400">Region/City:</strong> ${data.regionName}, ${data.city}</div>
-                        <div><strong class="text-blue-400">ISP:</strong> ${data.isp}</div>
-                        <div><strong class="text-blue-400">Org:</strong> ${data.org}</div>
-                        <div><strong class="text-blue-400">Coords:</strong> ${data.lat}, ${data.lon}</div>
-                    `;
-                } else {
-                    showError(resDiv, 'Invalid IP or lookup failed.');
-                }
-            } catch (err) {
-                showError(resDiv, 'Network error: ' + err.message);
-            }
+        // Use ipinfo.io free HTTPS endpoint (50k requests/month, no key required)
+async function checkIP() {
+    const ip = document.getElementById('ipInput').value.trim() || '';
+    const resDiv = document.getElementById('ipResult');
+    resDiv.classList.remove('hidden');
+    resDiv.innerHTML = '<i class="fas fa-spinner fa-spin text-blue-400"></i> Fetching geolocation...';
+
+    // When ip is empty, the API returns the visitor's own IP info
+    const apiUrl = ip ? `https://ipinfo.io/${encodeURIComponent(ip)}/json` : `https://ipinfo.io/json`;
+
+    try {
+        const response = await fetch(apiUrl);
+        if (!response.ok) throw new Error('Request failed');
+        const data = await response.json();
+
+        // ipinfo.io returns an "error" key on invalid IP
+        if (data.error) {
+            resDiv.innerHTML = `<span class="text-red-400">Error: ${data.error.title || 'Invalid IP or lookup failed.'}</span>`;
+            return;
         }
+
+        // Format coordinates if available (ipinfo returns "loc" as "lat,lng")
+        const coords = data.loc ? data.loc.replace(',', ', ') : 'N/A';
+
+        resDiv.innerHTML = `
+            <div><strong class="text-blue-400">IP:</strong> ${data.ip || 'N/A'}</div>
+            <div><strong class="text-blue-400">Country:</strong> ${data.country || 'N/A'}</div>
+            <div><strong class="text-blue-400">Region/City:</strong> ${data.region || 'N/A'}, ${data.city || 'N/A'}</div>
+            <div><strong class="text-blue-400">ISP:</strong> ${data.org || 'N/A'}</div>
+            <div><strong class="text-blue-400">Coords:</strong> ${coords}</div>
+        `;
+    } catch (err) {
+        resDiv.innerHTML = `<span class="text-red-400">Error requesting IP data. (Check network or API limit)</span>`;
+    }
+    }
 
         // ==========================
         // 2. Email Verification (uses Abstract API – replace key with your own)
