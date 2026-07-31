@@ -1256,7 +1256,7 @@ function appendMessage(message, colorClass) {
 
 
 
- //mac address 
+//mac address 
 async function lookupMac() {
     const mac = document.getElementById('macInput').value.trim();
     const resDiv = document.getElementById('macResult');
@@ -1271,12 +1271,10 @@ async function lookupMac() {
     resDiv.innerHTML = '<i class="fas fa-spinner fa-spin text-blue-400"></i> Fetching MAC details...';
 
     const targetUrl = `https://api.maclookup.app/v2/macs/${encodeURIComponent(mac)}`;
-    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
 
     try {
-        const response = await fetch(proxyUrl);
-        const data = await response.json();
-        const actualData = JSON.parse(data.contents);
+        const response = await fetch(targetUrl);
+        const actualData = await response.json();
 
         if (actualData && actualData.success) {
             resDiv.innerHTML = `
@@ -1297,7 +1295,8 @@ async function lookupMac() {
     } catch (err) {
         resDiv.innerHTML = `<span class="text-red-400">Error: Network or server connection failed.</span>`;
     }
-}
+    }
+    
 
 
 
