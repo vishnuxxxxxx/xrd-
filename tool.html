@@ -1005,7 +1005,7 @@ function copyEncryptedCode() {
 }
 
 
-// Simple XOR Cipher for optional password protection
+// Simple XOR Cipher image to text hide
 function xorEncryptDecrypt(text, key) {
     if (!key) return text;
     let result = '';
@@ -1013,6 +1013,14 @@ function xorEncryptDecrypt(text, key) {
         result += String.fromCharCode(text.charCodeAt(i) ^ key.charCodeAt(i % key.length));
     }
     return result;
+}
+
+// Helper: create off-screen canvas dynamically (avoids missing DOM element)
+function createOffscreenCanvas() {
+    const canvas = document.createElement('canvas');
+    canvas.style.display = 'none';
+    document.body.appendChild(canvas);
+    return canvas;
 }
 
 function encodeMessage() {
@@ -1033,46 +1041,61 @@ function encodeMessage() {
     reader.onload = function(event) {
         const img = new Image();
         img.onload = function() {
-            const canvas = document.getElementById('imageCanvas');
-            const ctx = canvas.getContext('2d');
-            canvas.width = img.width;
-            canvas.height = img.height;
-            ctx.drawImage(img, 0, 0);
+            try {
+                const canvas = createOffscreenCanvas();
+                const ctx = canvas.getContext('2d');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                ctx.drawImage(img, 0, 0);
 
-            let processedMsg = xorEncryptDecrypt(messageInput, password);
-            // Add a delimiter to mark the end of the message
-            let fullMessage = processedMsg + "###EOF###";
-            
-            // Convert message to binary string
-            let binaryMessage = "";
-            for (let i = 0; i < fullMessage.length; i++) {
-                let bin = fullMessage.charCodeAt(i).toString(2).padStart(8, '0');
-                binaryMessage += bin;
+                let processedMsg = xorEncryptDecrypt(messageInput, password);
+                let fullMessage = processedMsg + "###EOF###";
+                
+                let binaryMessage = "";
+                for (let i = 0; i < fullMessage.length; i++) {
+                    let bin = fullMessage.charCodeAt(i).toString(2).padStart(8, '0');
+                    binaryMessage += bin;
+                }
+
+                const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const data = imgData.data;
+
+                if (binaryMessage.length > (data.length / 4)) {
+                    alert('Message is too large for this image!');
+                    canvas.remove();
+                    return;
+                }
+
+                for (let i = 0; i < binaryMessage.length; i++) {
+                    data[i * 4] = (data[i * 4] & ~1) | parseInt(binaryMessage[i], 10);
+                }
+
+                ctx.putImageData(imgData, 0, 0);
+
+                canvas.toBlob(function(blob) {
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = 'hidden_secret_image.png';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(url);
+                    canvas.remove();
+                    alert('Secret message successfully hidden inside the image and downloaded!');
+                }, 'image/png');
+            } catch (err) {
+                console.error('Encoding error:', err);
+                alert('Error encoding image: ' + err.message);
             }
-
-            const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            const data = imgData.data;
-
-            if (binaryMessage.length > (data.length / 4)) {
-                alert('Message is too large for this image!');
-                return;
-            }
-
-            // Hide binary data into the Least Significant Bit (LSB) of pixel color channels
-            for (let i = 0; i < binaryMessage.length; i++) {
-                data[i * 4] = (data[i * 4] & ~1) | parseInt(binaryMessage[i]);
-            }
-
-            ctx.putImageData(imgData, 0, 0);
-
-            // Trigger download of the modified image
-            const link = document.createElement('a');
-            link.download = 'hidden_secret_image.png';
-            link.href = canvas.toDataURL('image/png');
-            link.click();
-            alert('Secret message successfully hidden inside the image and downloaded!');
+        };
+        img.onerror = function() {
+            alert('Error loading image. Please try a different file.');
         };
         img.src = event.target.result;
+    };
+    reader.onerror = function() {
+        alert('Error reading file.');
     };
     reader.readAsDataURL(fileInput.files[0]);
 }
@@ -1092,48 +1115,59 @@ function decodeMessage() {
     reader.onload = function(event) {
         const img = new Image();
         img.onload = function() {
-            const canvas = document.getElementById('imageCanvas');
-            const ctx = canvas.getContext('2d');
-            canvas.width = img.width;
-            canvas.height = img.height;
-            ctx.drawImage(img, 0, 0);
+            try {
+                const canvas = createOffscreenCanvas();
+                const ctx = canvas.getContext('2d');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                ctx.drawImage(img, 0, 0);
 
-            const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            const data = imgData.data;
+                const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const data = imgData.data;
 
-            let binaryMessage = "";
-            for (let i = 0; i < data.length; i += 4) {
-                binaryMessage += (data[i] & 1).toString();
-            }
-
-            // Convert binary back to characters
-            let fullMessage = "";
-            for (let i = 0; i < binaryMessage.length; i += 8) {
-                let byte = binaryMessage.slice(i, i + 8);
-                if (byte.length < 8) break;
-                let char = String.fromCharCode(parseInt(byte, 2));
-                fullMessage += char;
-                
-                if (fullMessage.endsWith("###EOF###")) {
-                    fullMessage = fullMessage.replace("###EOF###", "");
-                    break;
+                let binaryMessage = "";
+                for (let i = 0; i < data.length; i += 4) {
+                    binaryMessage += (data[i] & 1).toString();
                 }
-            }
 
-            let decryptedMsg = xorEncryptDecrypt(fullMessage, password);
+                let fullMessage = "";
+                for (let i = 0; i < binaryMessage.length; i += 8) {
+                    let byte = binaryMessage.slice(i, i + 8);
+                    if (byte.length < 8) break;
+                    let char = String.fromCharCode(parseInt(byte, 2));
+                    fullMessage += char;
+                    
+                    if (fullMessage.endsWith("###EOF###")) {
+                        fullMessage = fullMessage.replace("###EOF###", "");
+                        break;
+                    }
+                }
 
-            if (decryptedMsg) {
-                outputDiv.textContent = decryptedMsg;
-                outputContainer.classList.remove('hidden');
-            } else {
-                alert('No secret message found or incorrect password!');
-                outputContainer.classList.add('hidden');
+                let decryptedMsg = xorEncryptDecrypt(fullMessage, password);
+
+                if (decryptedMsg) {
+                    outputDiv.textContent = decryptedMsg;
+                    outputContainer.classList.remove('hidden');
+                } else {
+                    alert('No secret message found or incorrect password!');
+                    outputContainer.classList.add('hidden');
+                }
+                canvas.remove();
+            } catch (err) {
+                console.error('Decoding error:', err);
+                alert('Error decoding image. It may be corrupted or tainted.');
             }
+        };
+        img.onerror = function() {
+            alert('Error loading image. Please check the file.');
         };
         img.src = event.target.result;
     };
+    reader.onerror = function() {
+        alert('Error reading file.');
+    };
     reader.readAsDataURL(fileInput.files[0]);
-}
+    }
 
      // Free Fire ID Lookup Function
 async function checkFFInfo() {
