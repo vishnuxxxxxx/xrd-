@@ -489,23 +489,23 @@
 </div>
 
 
-<!-- Image Steganography Tool -->
+        <!-- Image Steganography Tool -->
 <div class="bg-[#111928] border border-gray-800 p-6 rounded-2xl shadow-xl w-full max-w-lg mb-6 text-white">
     <h3 class="text-xl font-bold mb-2 flex items-center gap-2">
         <i class="fas fa-image text-blue-500"></i> Image Steganography Suite
     </h3>
     <p class="text-gray-400 text-sm mb-6">Hide secret messages inside an image with an optional password.</p>
-    
+
     <!-- Hide Message Section -->
     <div class="flex flex-col gap-4 mb-6 p-4 bg-[#0b0f17] rounded-xl border border-gray-800">
         <h4 class="font-semibold text-sm border-b border-gray-800 pb-2">Hide Message in Image</h4>
-        
+
         <input type="file" id="imageInput" accept="image/*" class="w-full text-xs text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700 cursor-pointer">
-        
+
         <textarea id="secretMessage" placeholder="Enter secret message..." rows="2" class="w-full p-3 rounded-xl bg-[#111928] border border-gray-800 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 text-sm"></textarea>
-        
+
         <input type="password" id="encryptPassword" placeholder="Optional Password (leave blank for none)" class="w-full p-3 rounded-xl bg-[#111928] border border-gray-800 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 text-sm">
-        
+
         <button id="encodeBtn" class="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-lg transition flex items-center justify-center gap-2 text-sm">
             <i class="fas fa-lock"></i> Hide & Download Image
         </button>
@@ -514,21 +514,23 @@
     <!-- Reveal Message Section -->
     <div class="flex flex-col gap-4 p-4 bg-[#0b0f17] rounded-xl border border-gray-800">
         <h4 class="font-semibold text-sm border-b border-gray-800 pb-2">Reveal Message from Image</h4>
-        
+
         <input type="file" id="decodeImageInput" accept="image/*" class="w-full text-xs text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-600 file:text-white hover:file:bg-emerald-700 cursor-pointer">
-        
+
         <input type="password" id="decryptPassword" placeholder="Password (if encrypted)" class="w-full p-3 rounded-xl bg-[#111928] border border-gray-800 text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 text-sm">
-        
+
         <button id="decodeBtn" class="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg shadow-lg transition flex items-center justify-center gap-2 text-sm">
             <i class="fas fa-unlock"></i> Reveal Message
         </button>
-        
+
         <div id="revealedOutputContainer" class="hidden flex flex-col gap-2 mt-2">
             <div class="text-gray-400 text-xs">Decoded Message:</div>
             <div id="revealedOutput" class="p-3 bg-[#111928] border border-gray-800 rounded-lg text-white font-mono text-sm break-all"></div>
         </div>
     </div>
 </div>
+
+<canvas id="imageCanvas" class="hidden"></canvas>
         
 
 
@@ -1181,7 +1183,140 @@ async function lookupMac() {
 
 
 
+// Simple XOR Cipher for optional password protection
+function xorEncryptDecrypt(text, key) {
+    if (!key) return text;
+    let result = '';
+    for (let i = 0; i < text.length; i++) {
+        result += String.fromCharCode(text.charCodeAt(i) ^ key.charCodeAt(i % key.length));
+    }
+    return result;
+}
 
+function encodeMessage() {
+    const fileInput = document.getElementById('imageInput');
+    const messageInput = document.getElementById('secretMessage').value;
+    const password = document.getElementById('encryptPassword').value;
+
+    if (!fileInput || fileInput.files.length === 0) {
+        alert('Please select an image first!');
+        return;
+    }
+    if (!messageInput) {
+        alert('Please enter a secret message!');
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = function(event) {
+        const img = new Image();
+        img.onload = function() {
+            const canvas = document.getElementById('imageCanvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            ctx.drawImage(img, 0, 0);
+
+            let processedMsg = xorEncryptDecrypt(messageInput, password);
+            let fullMessage = processedMsg + "###EOF###";
+
+            let binaryMessage = "";
+            for (let i = 0; i < fullMessage.length; i++) {
+                let bin = fullMessage.charCodeAt(i).toString(2).padStart(8, '0');
+                binaryMessage += bin;
+            }
+
+            const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const data = imgData.data;
+
+            if (binaryMessage.length > (data.length / 4)) {
+                alert('Message is too large for this image!');
+                return;
+            }
+
+            for (let i = 0; i < binaryMessage.length; i++) {
+                data[i * 4] = (data[i * 4] & ~1) | parseInt(binaryMessage[i]);
+            }
+
+            ctx.putImageData(imgData, 0, 0);
+
+            const link = document.createElement('a');
+            link.download = 'hidden_secret_image.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+            alert('Secret message successfully hidden inside the image and downloaded!');
+        };
+        img.src = event.target.result;
+    };
+    reader.readAsDataURL(fileInput.files[0]);
+}
+
+function decodeMessage() {
+    const fileInput = document.getElementById('decodeImageInput');
+    const password = document.getElementById('decryptPassword').value;
+    const outputContainer = document.getElementById('revealedOutputContainer');
+    const outputDiv = document.getElementById('revealedOutput');
+
+    if (!fileInput || fileInput.files.length === 0) {
+        alert('Please select an encoded image!');
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = function(event) {
+        const img = new Image();
+        img.onload = function() {
+            const canvas = document.getElementById('imageCanvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            ctx.drawImage(img, 0, 0);
+
+            const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const data = imgData.data;
+
+            let binaryMessage = "";
+            for (let i = 0; i < data.length; i += 4) {
+                binaryMessage += (data[i] & 1).toString();
+            }
+
+            let fullMessage = "";
+            for (let i = 0; i < binaryMessage.length; i += 8) {
+                let byte = binaryMessage.slice(i, i + 8);
+                if (byte.length < 8) break;
+                let char = String.fromCharCode(parseInt(byte, 2));
+                fullMessage += char;
+
+                if (fullMessage.endsWith("###EOF###")) {
+                    fullMessage = fullMessage.replace("###EOF###", "");
+                    break;
+                }
+            }
+
+            let decryptedMsg = xorEncryptDecrypt(fullMessage, password);
+
+            if (decryptedMsg) {
+                outputDiv.textContent = decryptedMsg;
+                outputContainer.classList.remove('hidden');
+            } else {
+                alert('No secret message found or incorrect password!');
+                outputContainer.classList.add('hidden');
+            }
+        };
+        img.src = event.target.result;
+    };
+    reader.readAsDataURL(fileInput.files[0]);
+}
+
+// Attach event listeners
+document.addEventListener('DOMContentLoaded', function() {
+    const encodeBtn = document.getElementById('encodeBtn');
+    const decodeBtn = document.getElementById('decodeBtn');
+
+    if (encodeBtn) encodeBtn.addEventListener('click', encodeMessage);
+    if (decodeBtn) decodeBtn.addEventListener('click', decodeMessage);
+});
+    
 
     // 6. ImgBB Upload
     async function uploadImage() {
